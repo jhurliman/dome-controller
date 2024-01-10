@@ -24,7 +24,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
-cpmaddpackage("gh:jeremy-rifkin/cpptrace@0.3.1")
+cpmaddpackage("gh:jeremy-rifkin/cpptrace#9dad2463b7b7a4f755ce1e93668b910206b9290f") # 0.3.1 + warning fix
 cpmaddpackage("gh:TartanLlama/expected@1.1.0")
 
 # Work around dependencies including with `-I` instead of `-isystem`
