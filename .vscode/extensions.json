@@ -1,0 +1,9 @@
+// -*- jsonc -*-
+{
+  "recommendations": [
+    "cheshirekow.cmake-format",
+    "esbenp.prettier-vscode",
+    "ms-vscode.cpptools"
+  ],
+  "unwantedRecommendations": []
+}
