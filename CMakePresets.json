@@ -1,0 +1,94 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "host",
+      "displayName": "Host System",
+      "description": "Build for the host system",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/host",
+      "toolchainFile": "${sourceDir}/host.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "COMPILE_CPU": "ON",
+        "COMPILE_CUDA": "ON",
+        "COMPILE_T210": "OFF"
+      }
+    },
+    {
+      "name": "host-cpu",
+      "displayName": "Host System (no CUDA)",
+      "description": "Build for the host system (CPU only, no CUDA)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/host",
+      "toolchainFile": "${sourceDir}/host.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "COMPILE_CPU": "ON",
+        "COMPILE_CUDA": "OFF",
+        "COMPILE_T210": "OFF"
+      }
+    },
+    {
+      "name": "jetson-nano",
+      "displayName": "Jetson Nano (ARM64)",
+      "description": "Build for Jetson Nano (ARM64)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/jetson-nano",
+      "toolchainFile": "${sourceDir}/jetson-t210.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "COMPILE_CPU": "OFF",
+        "COMPILE_CUDA": "OFF",
+        "COMPILE_T210": "ON"
+      }
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host",
+      "displayName": "Host System",
+      "description": "Run tests on the host system",
+      "configurePreset": "host",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "filter": {
+        "exclude": {
+          "name": "_deps"
+        },
+        "include": {
+          "name": "^unit_tests_"
+        }
+      }
+    },
+    {
+      "name": "host-cpu",
+      "displayName": "Host System (no CUDA)",
+      "description": "Run tests on the host system (CPU only, no CUDA)",
+      "configurePreset": "host-cpu",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "filter": {
+        "exclude": {
+          "name": "_deps"
+        },
+        "include": {
+          "name": "^unit_tests_cpu"
+        }
+      }
+    }
+  ]
+}
