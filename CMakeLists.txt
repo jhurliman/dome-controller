@@ -23,6 +23,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+find_package(PulseAudio REQUIRED)
+
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:jeremy-rifkin/cpptrace#9dad2463b7b7a4f755ce1e93668b910206b9290f") # 0.3.1 + warning fix
 cpmaddpackage("gh:TartanLlama/expected@1.1.0")
@@ -88,7 +90,9 @@ endif()
 add_executable(myapp src/main.cpp)
 target_compile_options(myapp PRIVATE ${PROJECT_WARNING_FLAGS})
 target_include_directories(myapp PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(myapp SYSTEM PRIVATE ${PULSEAUDIO_INCLUDE_DIR})
 target_include_directories(myapp SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
+target_link_libraries(myapp PUBLIC ${PULSEAUDIO_LIBRARY})
 target_link_libraries(myapp PRIVATE fmt::fmt)
 if(COMPILE_T210)
   target_link_libraries(myapp PRIVATE backend_t210)
