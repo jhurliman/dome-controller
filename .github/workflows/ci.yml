@@ -28,13 +28,14 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${{ matrix.clang-version }} 999
-      - name: Install CMake/Ninja
+      - name: Install CMake/Ninja/PulseAudio
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
             cmake-format \
             ninja-build \
+            libpulse-dev
       - uses: actions/checkout@v3
         with:
           lfs: true
