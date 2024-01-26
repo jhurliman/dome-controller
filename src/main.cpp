@@ -25,11 +25,11 @@ constexpr float DURATION_SEC = 1.5f;
 using namespace std::chrono_literals;
 
 std::vector<float> GenerateSineWave(float frequency, float durationSeconds, uint32_t sampleRate) {
-  size_t totalSamples = size_t(durationSeconds * sampleRate);
+  size_t totalSamples = size_t(durationSeconds * float(sampleRate));
   std::vector<float> wave(totalSamples);
 
   for (size_t i = 0; i < totalSamples; i++) {
-    wave[i] = std::sinf(float(2 * M_PI) * frequency * i / sampleRate);
+    wave[i] = std::sin(float(2 * M_PI) * frequency * i / sampleRate);
   }
 
   return wave;
@@ -272,7 +272,7 @@ int main() {
   std::vector<std::vector<float>> sineWaves;
   sineWaves.reserve(outputChannels);
   for (size_t i = 0; i < outputChannels; ++i) {
-    const float hz = 440 * std::powf(2, float(i) / 12);
+    const float hz = 440 * std::pow(2, float(i) / 12);
     sineWaves.emplace_back(GenerateSineWave(hz, DURATION_SEC, sink.sampleSpec.rate));
   }
 
