@@ -55,6 +55,7 @@ mkdir -p "jetson-${BOARD_ID}"
 tar -xpf "jetson-${BOARD_ID}-sysroot.tar" -C "jetson-${BOARD_ID}"
 
 # Fix absolute symlinks in the sysroot
+SYSROOT_DIR="$(pwd)/jetson-${BOARD_ID}"
 find "$SYSROOT_DIR" -type l -print0 | while IFS= read -r -d '' symlink; do
     target="$(readlink "$symlink")"
     # Check if the symlink is absolute and does not start with SYSROOT_DIR
