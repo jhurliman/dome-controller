@@ -51,6 +51,9 @@ if(COMPILE_CPU)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/backend/cpu)
   target_include_directories(backend_cpu SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_cpu PUBLIC cpptrace::cpptrace tl::expected TBB::tbb)
+
+  target_include_directories(backend_cpu SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_cpu PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
 if(COMPILE_CUDA)
@@ -70,6 +73,9 @@ if(COMPILE_CUDA)
   target_compile_definitions(
     backend_cuda PUBLIC -DUSE_GPU -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
+
+  target_include_directories(backend_cuda SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_cuda PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
 if(COMPILE_T210)
@@ -89,14 +95,15 @@ if(COMPILE_T210)
   target_compile_definitions(
     backend_t210 PUBLIC -DUSE_GPU -DUSE_T210 -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
+
+  target_include_directories(backend_t210 SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_t210 PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
 add_executable(myapp src/main.cpp)
 target_compile_options(myapp PRIVATE ${PROJECT_WARNING_FLAGS})
 target_include_directories(myapp PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_include_directories(myapp SYSTEM PRIVATE ${PULSEAUDIO_INCLUDE_DIR})
 target_include_directories(myapp SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
-target_link_libraries(myapp PUBLIC ${PULSEAUDIO_LIBRARY})
 target_link_libraries(myapp PRIVATE fmt::fmt)
 if(COMPILE_T210)
   target_link_libraries(myapp PRIVATE backend_t210)
