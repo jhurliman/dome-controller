@@ -13,7 +13,7 @@ if(NOT COMPILE_CPU
   message(FATAL_ERROR "At least one backend must be compiled")
 endif()
 
-if(COMPILE_CUDA)
+if(COMPILE_CUDA OR COMPILE_T210)
   enable_language(CUDA)
 endif()
 
@@ -30,7 +30,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(PulseAudio REQUIRED)
 
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
-cpmaddpackage("gh:jeremy-rifkin/cpptrace#9dad2463b7b7a4f755ce1e93668b910206b9290f") # 0.3.1 + warning fix
+# cpptrace 0.3.1 + warning fix
+cpmaddpackage("gh:jeremy-rifkin/cpptrace#9dad2463b7b7a4f755ce1e93668b910206b9290f")
 cpmaddpackage("gh:TartanLlama/expected@1.1.0")
 
 # Work around dependencies including with `-I` instead of `-isystem`
@@ -38,6 +39,7 @@ get_target_property(FMT_INCLUDE_DIRS fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
 get_target_property(EXPECTED_INCLUDE_DIRS tl::expected INTERFACE_INCLUDE_DIRECTORIES)
 
 file(GLOB_RECURSE COMMON_SOURCES "src/backend/common/*.cpp")
+file(GLOB_RECURSE CUDA_SOURCES "src/backend/gpu/*.cpp" "src/backend/gpu/*.cu")
 
 if(COMPILE_CPU)
   cpmaddpackage("gh:oneapi-src/oneTBB@2021.11.0")
@@ -59,7 +61,6 @@ endif()
 if(COMPILE_CUDA)
   find_package(CUDAToolkit REQUIRED)
 
-  file(GLOB_RECURSE CUDA_SOURCES "src/backend/gpu/*.cpp" "src/backend/gpu/*.cu")
   add_library(backend_cuda STATIC ${COMMON_SOURCES} ${CUDA_SOURCES})
   target_compile_options(backend_cuda PRIVATE ${PROJECT_WARNING_FLAGS})
   target_include_directories(
@@ -81,8 +82,7 @@ endif()
 if(COMPILE_T210)
   find_package(CUDAToolkit REQUIRED)
 
-  file(GLOB_RECURSE T210_SOURCES "src/backend/gpu/*.cpp" "src/backend/gpu/*.cu")
-  add_library(backend_t210 STATIC ${COMMON_SOURCES} ${T210_SOURCES})
+  add_library(backend_t210 STATIC ${COMMON_SOURCES} ${CUDA_SOURCES})
   target_compile_options(backend_t210 PRIVATE ${PROJECT_WARNING_FLAGS})
   target_include_directories(
     backend_t210
