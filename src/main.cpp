@@ -29,7 +29,7 @@ std::vector<float> GenerateSineWave(float frequency, float durationSeconds, uint
   std::vector<float> wave(totalSamples);
 
   for (size_t i = 0; i < totalSamples; i++) {
-    wave[i] = std::sin(float(2 * M_PI) * frequency * i / sampleRate);
+    wave[i] = std::sin(float(2 * M_PI) * frequency * float(i) / float(sampleRate));
   }
 
   return wave;
@@ -196,7 +196,7 @@ int main() {
     for (float sample : recordingBuffer) {
       rms += sample * sample;
     }
-    rms = std::sqrt(rms / recordingBuffer.size());
+    rms = std::sqrt(rms / float(recordingBuffer.size()));
     std::cout << "\nRecorded " << recordingBuffer.size() << " samples, RMS: " << rms << "\n";
 
     // Cleanup
@@ -272,7 +272,7 @@ int main() {
   std::vector<std::vector<float>> sineWaves;
   sineWaves.reserve(outputChannels);
   for (size_t i = 0; i < outputChannels; ++i) {
-    const float hz = 440 * std::pow(2, float(i) / 12);
+    const float hz = 440.0f * float(std::pow(2, float(i) / 12));
     sineWaves.emplace_back(GenerateSineWave(hz, DURATION_SEC, sink.sampleSpec.rate));
   }
 
