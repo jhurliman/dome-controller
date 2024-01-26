@@ -63,10 +63,9 @@ find "$SYSROOT_DIR" -type l -print0 | while IFS= read -r -d '' symlink; do
         # Make the target relative to the symlink
         fixed_target="$SYSROOT_DIR$target"
 
-        ln -sf "$fixed_target" "$symlink" 2>/dev/null
-        if [[ $? -ne 0 ]]; then
+        ln -sf "$fixed_target" "$symlink" 2>/dev/null || {
             sudo ln -sf "$fixed_target" "$symlink"
-        fi
+        }
     fi
 done
 
