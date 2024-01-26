@@ -1,159 +1,62 @@
 #include "cuda/CudaBufferUnified.hpp"
 #include "cuda/arithmetic.hpp"
 #include "cuda/stream.hpp"
-#include "pulse_utils.hpp"
+#include "pulse/AutoPulseLock.hpp"
+#include "pulse/MainloopSync.hpp"
+#include "pulse/ScopedPropertyList.hpp"
+#include "pulse/Sink.hpp"
+#include "pulse/Source.hpp"
+#include "pulse/common.hpp"
 
 #include <fmt/format.h>
 #include <pulse/pulseaudio.h>
+#include <tl/expected.hpp>
 
-#include <condition_variable>
 #include <iostream>
-#include <mutex>
+#include <string_view>
+#include <thread>
 
-constexpr char APP_NAME[] = "dome-controller";
-constexpr char APP_ID[] = "org.jhurliman.dome-controller";
-constexpr char APP_VERSION[] = "0.0.1";
+constexpr std::string_view APP_NAME = "dome-controller";
+constexpr std::string_view APP_ID = "org.jhurliman.dome-controller";
+constexpr std::string_view APP_VERSION = "0.0.1";
+
+constexpr float DURATION_SEC = 1.5f;
 
 using namespace std::chrono_literals;
 
+std::vector<float> GenerateSineWave(float frequency, float durationSeconds, uint32_t sampleRate) {
+  size_t totalSamples = size_t(durationSeconds * sampleRate);
+  std::vector<float> wave(totalSamples);
+
+  for (size_t i = 0; i < totalSamples; i++) {
+    wave[i] = std::sinf(float(2 * M_PI) * frequency * i / sampleRate);
+  }
+
+  return wave;
+}
+
 template<typename T>
-std::unique_ptr<CudaBufferUnified> Vec2Cuda(const std::vector<T>& vec, cudaStream_t stream) {
-  auto res = CudaBufferUnified::createFromHostData(vec.data(), vec.size() * sizeof(T), stream);
-  if (!res) { throw std::runtime_error(res.error().errorMessage); }
-  return std::move(res.value());
-}
+void InterleaveChannels(std::vector<T>& output, const std::vector<std::vector<T>>& channels) {
+  // Calculate total number of channels
+  const size_t numChannels = channels.size();
+  assert(numChannels > 0);
 
-std::unique_ptr<CudaBufferUnified> CudaBuf(size_t size) {
-  auto res = CudaBufferUnified::create(size);
-  if (!res) { throw std::runtime_error(res.error().errorMessage); }
-  return std::move(res.value());
-}
-
-template<typename T> CudaArrayView<T> Buf2View(CudaBufferUnified& buf) {
-  const size_t n = buf.size() / sizeof(T);
-  auto res = CudaArrayView<T>::fromBuffer(buf, n);
-  if (!res) { throw std::runtime_error(res.error().errorMessage); }
-  return std::move(res.value());
-}
-
-void PulseContextStateCallback(pa_context* context, void* userData);
-void PulseStreamWriteCallback(pa_stream* stream, size_t requestedBytes, void* userData);
-
-struct PulseAudioSync {
-  pa_threaded_mainloop* mainloop;
-  std::mutex mutex;
-  std::condition_variable cv;
-  bool completed = false;
-
-  explicit PulseAudioSync(pa_threaded_mainloop* mainloop) : mainloop(mainloop) {}
-
-  bool waitWithTimeout(std::chrono::milliseconds timeout) {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!cv.wait_for(lock, timeout, [&] { return completed; })) { return false; }
-    return true;
+  // Check that all channels have the same number of samples
+  const size_t numSamples = channels[0].size();
+  for (size_t i = 1; i < numChannels; ++i) {
+    assert(channels[i].size() == numSamples);
   }
 
-  void signalComplete() {
-    std::lock_guard<std::mutex> lock(mutex);
-    completed = true;
-    cv.notify_one();
-  }
-};
+  // Resize output vector
+  output.resize(numSamples * numChannels);
 
-struct PulseSession {
-  pa_threaded_mainloop* mainloop;
-  pa_context* context;
-};
-
-tl::expected<PulseSession, PulseError> CreatePulseAudioSession() {
-  ScopedPropertyList props;
-  props.setValue(PA_PROP_APPLICATION_NAME, APP_NAME);
-  props.setValue(PA_PROP_APPLICATION_ID, APP_ID);
-  props.setValue(PA_PROP_APPLICATION_VERSION, APP_VERSION);
-
-  // Create a PulseAudio threaded mainloop API server connection context. The mainloop is the
-  // internal asynchronous API event loop
-  pa_threaded_mainloop* mainloop = pa_threaded_mainloop_new();
-  if (!mainloop) {
-    const int err = pa_context_errno(nullptr);
-    const std::string msg = err > 0 ? pa_strerror(err) : "pa_threaded_mainloop_new unknown failure";
-    return tl::unexpected<PulseError>(PulseError(err, msg));
-  }
-
-  pa_context* context =
-    pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop), APP_NAME, props.get());
-  if (!context) {
-    const int err = pa_context_errno(nullptr);
-    const std::string msg =
-      err > 0 ? pa_strerror(err) : "pa_context_new_with_proplist unknown failure";
-    pa_threaded_mainloop_free(mainloop);
-    return tl::unexpected<PulseError>(PulseError(err, msg));
-  }
-
-  auto signalReadyOrErrorStateCallback = [](pa_context* context, void* userData) {
-    pa_context_state_t contextState = pa_context_get_state(context);
-    auto* sync = static_cast<PulseAudioSync*>(userData);
-    if (!PA_CONTEXT_IS_GOOD(contextState) || contextState == PA_CONTEXT_READY) {
-      sync->signalComplete();
-    }
-    pa_threaded_mainloop_signal(sync->mainloop, 0);
-  };
-
-  // Attempt to connect to the PulseAudio server and wait for the connection to be ready. Connection
-  // readiness is signaled by calling signalReadyOrErrorStateCallback when the context state
-  // changes. When it changes to either ready or an error state, our condition variable is signaled
-  PulseAudioSync sync{mainloop};
-  pa_context_set_state_callback(context, signalReadyOrErrorStateCallback, &sync);
-
-  if (0 != pa_context_connect(context, nullptr, PA_CONTEXT_NOFLAGS, nullptr)) {
-    const int err = pa_context_errno(context);
-    DestroyContext(context);
-    pa_threaded_mainloop_free(mainloop);
-    return tl::unexpected<PulseError>(PulseError(err, pa_strerror(err)));
-  }
-
-  {
-    // Lock the mainloop before calling pa_threaded_mainloop_start()
-    auto mainloopLock = std::make_unique<AutoPulseLock>(mainloop);
-
-    // Start the threaded mainloop
-    if (0 != pa_threaded_mainloop_start(mainloop)) {
-      const int err = pa_context_errno(context);
-      DestroyContext(context);
-      mainloopLock.reset();
-      DestroyMainloop(mainloop);
-      return tl::unexpected<PulseError>(PulseError(err, pa_strerror(err)));
+  // Interleave channels
+  for (size_t i = 0; i < numSamples; ++i) {
+    for (size_t j = 0; j < numChannels; ++j) {
+      output[i * numChannels + j] = channels[j][i];
     }
   }
-
-  // Wait for the context to be ready or for an error to occur
-  constexpr auto STARTUP_TIMEOUT = 2000ms;
-  if (!sync.waitWithTimeout(STARTUP_TIMEOUT)) {
-    DestroyContext(context);
-    DestroyMainloop(mainloop);
-    return tl::unexpected<PulseError>(
-      PulseError(-1, std::string{"Timed out waiting for PulseAudio connection"}));
-  }
-
-  {
-    // Lock the mainloop before calling pa_context_get_state()
-    auto mainloopLock = std::make_unique<AutoPulseLock>(mainloop);
-
-    pa_context_state_t contextState = pa_context_get_state(context);
-    if (contextState != PA_CONTEXT_READY) {
-      DestroyContext(context);
-      mainloopLock.reset();
-      DestroyMainloop(mainloop);
-      return tl::unexpected<PulseError>(PulseError(
-        -1, std::string{"pa_context_get_state returned "} + std::to_string(contextState)));
-    }
-
-    // Replace our function local state callback with a global one
-    pa_context_set_state_callback(context, &PulseContextStateCallback, mainloop);
-  }
-
-  return PulseSession{mainloop, context};
-};
+}
 
 void PulseContextStateCallback(pa_context* context, void* userData) {
   (void)context;
@@ -166,120 +69,237 @@ void PulseStreamWriteCallback(pa_stream* stream, size_t requestedBytes, void* us
   (void)userData;
 }
 
-void ListModules(pa_threaded_mainloop* mainloop, pa_context* context) {
-  auto moduleInfoCallback =
-    [](pa_context* context, const pa_module_info* info, int eol, void* userData) {
-      (void)context;
-
-      if (eol > 0) {
-        PulseAudioSync* sync = static_cast<PulseAudioSync*>(userData);
-        // Work around an apparent bug in PulseAudio where the final module info callback is
-        // called with `(nullptr, nullptr, 1, nullptr)` so we can't signal completion and need to
-        // let the timeout handle it
-        if (sync) { sync->signalComplete(); }
-        return;
-      }
-
-      std::cout << "Module: " << info->name;
-      if (info->argument) { std::cout << " (" << info->argument << ")"; }
-      std::cout << "\n";
-    };
-
-  PulseAudioSync sync{mainloop};
-  auto mainloopLock = std::make_unique<AutoPulseLock>(mainloop);
-  pa_operation* op = pa_context_get_module_info_list(context, moduleInfoCallback, nullptr);
-  mainloopLock.reset();
-
-  sync.waitWithTimeout(500ms);
-
-  mainloopLock = std::make_unique<AutoPulseLock>(mainloop);
-  pa_operation_unref(op);
-}
-
-void ListRecordingInputs(pa_threaded_mainloop* mainloop, pa_context* context) {
-  auto sourceInfoCallback =
-    [](pa_context* context, const pa_source_info* info, int eol, void* userData) {
-      (void)context;
-
-      if (eol > 0) {
-        PulseAudioSync* sync = static_cast<PulseAudioSync*>(userData);
-        sync->signalComplete();
-        return;
-      }
-
-      std::cout << "Source: " << info->name << "(" << info->description << ")\n";
-    };
-
-  PulseAudioSync sync{mainloop};
-  auto mainloopLock = std::make_unique<AutoPulseLock>(mainloop);
-  pa_operation* op = pa_context_get_source_info_list(context, sourceInfoCallback, &sync);
-  mainloopLock.reset();
-
-  if (!sync.waitWithTimeout(2000ms)) {
-    std::cerr << "Timed out waiting for source list\n";
-    return;
-  }
-
-  mainloopLock = std::make_unique<AutoPulseLock>(mainloop);
-  pa_operation_unref(op);
-}
-
 int main() {
   InstallStackTraceHandler();
 
-  auto sessionRes = CreatePulseAudioSession();
+  auto sessionRes = pulse::CreateSession(APP_NAME, APP_ID, APP_VERSION);
   if (!sessionRes) {
     std::cerr << "CreatePulseAudioSession failed: " << sessionRes.error().errorMessage << "\n";
     return 1;
   }
   auto session = std::move(sessionRes.value());
-
   std::cout << "PulseAudio session created\n";
 
-  ListModules(session.mainloop, session.context);
+  const auto sources = pulse::GetRecordingSources(session.mainloop, session.context);
+  std::cout << "Recording sources:\n";
+  for (const auto& source : sources) {
+    std::cout << fmt::format("  {} ({}) - {} channel{}\n",
+      source.name,
+      source.description,
+      source.volume.channels,
+      source.volume.channels > 1 ? "s" : "");
+  }
 
-  ListRecordingInputs(session.mainloop, session.context);
+  std::vector<float> recordingBuffer;
 
-  DestroyPulse(session.mainloop, session.context);
+  if (!sources.empty()) {
+    // Select the source with the most channels
+    const auto& source = *std::max_element(sources.begin(),
+      sources.end(),
+      [](const auto& a, const auto& b) { return a.volume.channels < b.volume.channels; });
 
-  // std::cout << "Adding two vectors\n";
+    // Create a stream for recording from a source
+    std::cout << "Recording from \"" << source.name << "\"\n";
+    pulse::ScopedPropertyList streamProps;
+    pa_stream* stream = pa_stream_new_with_proplist(
+      session.context, "Dome Microphone Array", &source.sampleSpec, nullptr, streamProps.get());
+    if (!stream) {
+      std::cerr << "Failed to create a new stream for recording from \"" << source.name << "\"\n";
+      pulse::DestroyPulse(session.mainloop, session.context);
+      return 1;
+    }
 
-  // auto streamRes = cuda::createStream("test", StreamPriority::Normal);
-  // if (!streamRes) {
-  //   std::cerr << "createdStream failed: " << streamRes.error().errorMessage << "\n";
-  //   return 1;
-  // }
-  // cudaStream_t stream = streamRes.value();
+    // Set the read callback to save to a buffer
+    auto readCallback = [](pa_stream* stream, size_t requestedBytes, void* userData) {
+      (void)requestedBytes;
+      size_t bytesToRead = pa_stream_readable_size(stream);
+      if (bytesToRead == size_t(-1)) {
+        std::cerr << "Failed to get readable size: "
+                  << pa_strerror(pa_context_errno(pa_stream_get_context(stream))) << "\n";
+        return;
+      }
+      const size_t floatsToRead = bytesToRead / sizeof(float);
+      std::cout << floatsToRead << ".";
+      std::cout.flush();
 
-  // const auto bufA = Vec2Cuda<int64_t>({1, 2, 3, 4, 5}, stream);
-  // const auto bufB = Vec2Cuda<int64_t>({6, 7, 8, 9, 10}, stream);
-  // const auto bufC = CudaBuf(5 * sizeof(int64_t));
+      if (bytesToRead == 0) { return; }
 
-  // const auto viewA = Buf2View<int64_t>(*bufA);
-  // const auto viewB = Buf2View<int64_t>(*bufB);
-  // auto viewC = Buf2View<int64_t>(*bufC);
+      auto& buffer = *static_cast<std::vector<float>*>(userData);
+      buffer.resize(buffer.size() + floatsToRead);
 
-  // auto err = addVectors(viewA, viewB, viewC, stream);
-  // if (err) {
-  //   std::cerr << "addVectors failed: " << err.value().errorMessage << "\n";
-  //   return 1;
-  // }
+      const void* pulseBuffer = nullptr;
+      if (0 != pa_stream_peek(stream, &pulseBuffer, &bytesToRead)) {
+        std::cerr << "Failed to peek stream: "
+                  << pa_strerror(pa_context_errno(pa_stream_get_context(stream))) << "\n";
+        return;
+      }
 
-  // constexpr size_t n = 5;
-  // std::vector<int64_t> vecC(n);
-  // err = bufC->copyToHost(vecC.data(), 0, vecC.size() * sizeof(int64_t), stream);
-  // if (err) {
-  //   std::cerr << "copyToHost failed: " << err.value().errorMessage << "\n";
-  //   return 1;
-  // }
+      // Copy the data from the pulse buffer to our buffer
+      const void** data =
+        reinterpret_cast<const void**>(buffer.data() + buffer.size() - floatsToRead);
+      std::memcpy(data, pulseBuffer, bytesToRead);
 
-  // err = cuda::destroyStream(stream);
-  // if (err) {
-  //   std::cerr << "destroyStream failed: " << err.value().errorMessage << "\n";
-  //   return 1;
-  // }
+      if (0 != pa_stream_drop(stream)) {
+        std::cerr << "Failed to drop stream: "
+                  << pa_strerror(pa_context_errno(pa_stream_get_context(stream))) << "\n";
+        return;
+      }
+    };
+    pa_stream_set_read_callback(stream, readCallback, &recordingBuffer);
 
-  // std::cout << "Result:   " << fmt::format("{}", fmt::join(vecC, ", ")) << "\n";
-  // std::cout << "Expected: 7, 9, 11, 13, 15\n";
-  // return 0;
+    // Connect to the stream for recording
+    const pa_stream_flags_t flags =
+      pa_stream_flags_t(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE);
+    const int connectRes = pa_stream_connect_record(stream, source.name.c_str(), nullptr, flags);
+    if (0 != connectRes) {
+      std::cerr << "Failed to connect record stream to \"" << source.name
+                << "\": " << pa_strerror(connectRes) << "\n";
+      pa_stream_unref(stream);
+      pulse::DestroyPulse(session.mainloop, session.context);
+      return 1;
+    }
+
+    if (!pulse::WaitForStreamReady(stream, session.mainloop)) {
+      std::cerr << "Timed out waiting for stream to become ready\n";
+      pa_stream_unref(stream);
+      pulse::DestroyPulse(session.mainloop, session.context);
+      return 1;
+    }
+
+    // Start recording
+    pa_operation* op = pa_stream_cork(stream, 0, nullptr, nullptr);
+    if (!op) {
+      std::cerr << "Failed to start recording: "
+                << pa_strerror(pa_context_errno(pa_stream_get_context(stream))) << "\n";
+      pa_stream_unref(stream);
+      pulse::DestroyPulse(session.mainloop, session.context);
+      return 1;
+    }
+
+    // Record for five seconds
+    std::cout << "Recording for 1 second\n";
+    std::this_thread::sleep_for(1s);
+
+    // Stop recording
+    pa_operation_unref(op);
+    op = pa_stream_cork(stream, 1, nullptr, nullptr);
+    if (!op) {
+      std::cerr << "Failed to stop recording: "
+                << pa_strerror(pa_context_errno(pa_stream_get_context(stream))) << "\n";
+      pa_stream_unref(stream);
+      pulse::DestroyPulse(session.mainloop, session.context);
+      return 1;
+    }
+    pa_operation_unref(op);
+
+    float rms = 0;
+    for (float sample : recordingBuffer) {
+      rms += sample * sample;
+    }
+    rms = std::sqrt(rms / recordingBuffer.size());
+    std::cout << "\nRecorded " << recordingBuffer.size() << " samples, RMS: " << rms << "\n";
+
+    // Cleanup
+    std::cout << "Cleaning up recording\n";
+    pa_stream_disconnect(stream);
+    pa_stream_unref(stream);
+  }
+
+  const auto sinks = pulse::GetAudioSinks(session.mainloop, session.context);
+  std::cout << "Audio sinks:\n";
+  for (const auto& sink : sinks) {
+    std::cout << fmt::format("  {} ({}) - {} channel{} {}\n",
+      sink.name,
+      sink.description,
+      sink.channelMap.channels,
+      sink.channelMap.channels > 1 ? "s" : "",
+      pa_sample_format_to_string(sink.sampleSpec.format));
+  }
+
+  if (sinks.empty()) {
+    std::cerr << "No audio sinks found\n";
+    pulse::DestroyPulse(session.mainloop, session.context);
+    return 1;
+  }
+
+  // Select the sink with the most channels
+  const auto& sink = *std::max_element(sinks.begin(),
+    sinks.end(),
+    [](const auto& a, const auto& b) { return a.channelMap.channels < b.channelMap.channels; });
+
+  if (sink.sampleSpec.format != PA_SAMPLE_FLOAT32LE) {
+    std::cerr << "Sink \"" << sink.name << "\" does not support float32le format, expects "
+              << pa_sample_format_to_string(sink.sampleSpec.format) << "\n";
+    pulse::DestroyPulse(session.mainloop, session.context);
+    return 1;
+  }
+
+  // Create a stream for playback to a sink
+  pulse::ScopedPropertyList streamProps;
+  pa_stream* stream = pa_stream_new_with_proplist(
+    session.context, "Sine Wave Playback", &sink.sampleSpec, nullptr, streamProps.get());
+  if (!stream) {
+    std::cerr << "Failed to create a new stream for playback to \"" << sink.name << "\"\n";
+    pulse::DestroyPulse(session.mainloop, session.context);
+    return 1;
+  }
+
+  // Set the write callback
+  pa_stream_set_write_callback(stream, PulseStreamWriteCallback, nullptr);
+
+  // Connect the stream to the default audio output
+  const pa_stream_flags_t flags = pa_stream_flags_t(
+    PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_UNMUTED);
+  const int connectRes =
+    pa_stream_connect_playback(stream, nullptr, nullptr, flags, nullptr, nullptr);
+  if (0 != connectRes) {
+    std::cerr << "Failed to connect playback stream to \"" << sink.name
+              << "\": " << pa_strerror(connectRes) << "\n";
+    pa_stream_unref(stream);
+    pulse::DestroyPulse(session.mainloop, session.context);
+    return 1;
+  }
+
+  if (!pulse::WaitForStreamReady(stream, session.mainloop)) {
+    std::cerr << "Timed out waiting for stream to become ready\n";
+    pa_stream_unref(stream);
+    pulse::DestroyPulse(session.mainloop, session.context);
+    return 1;
+  }
+
+  // Generate a different sine wave for each channel
+  const size_t outputChannels = sink.channelMap.channels;
+  std::vector<std::vector<float>> sineWaves;
+  sineWaves.reserve(outputChannels);
+  for (size_t i = 0; i < outputChannels; ++i) {
+    const float hz = 440 * std::powf(2, float(i) / 12);
+    sineWaves.emplace_back(GenerateSineWave(hz, DURATION_SEC, sink.sampleSpec.rate));
+  }
+
+  // Play the sine waves
+  std::cout << "Playing " << outputChannels << " sine waves for " << DURATION_SEC << " seconds\n";
+  std::vector<float> interleaved;
+  InterleaveChannels(interleaved, sineWaves);
+  const size_t bytesToWrite = interleaved.size() * sizeof(float);
+  const int writeRes =
+    pa_stream_write(stream, interleaved.data(), bytesToWrite, nullptr, 0, PA_SEEK_RELATIVE);
+  if (0 != writeRes) {
+    std::cerr << "Failed to write to stream: " << pa_strerror(writeRes) << "\n";
+    pa_stream_unref(stream);
+    pulse::DestroyPulse(session.mainloop, session.context);
+    return 1;
+  }
+
+  // Wait for the sine wave to finish playing
+  pa_operation* op = pa_stream_drain(stream, nullptr, nullptr);
+  // pa_threaded_mainloop_wait(session.mainloop);
+  std::this_thread::sleep_for(1s);
+  pa_operation_unref(op);
+
+  // Cleanup
+  std::cout << "Cleaning up\n";
+  pa_stream_disconnect(stream);
+  pa_stream_unref(stream);
+
+  pulse::DestroyPulse(session.mainloop, session.context);
 }
