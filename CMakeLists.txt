@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(JetsonCrossCompilation LANGUAGES CXX CUDA)
+project(JetsonCrossCompilation LANGUAGES CXX)
 
 option(COMPILE_CPU "Compile the CPU backend" ON)
 option(COMPILE_CUDA "Compile the CUDA backend" ON)
@@ -11,6 +11,10 @@ if(NOT COMPILE_CPU
    AND NOT COMPILE_CUDA
    AND NOT COMPILE_T210)
   message(FATAL_ERROR "At least one backend must be compiled")
+endif()
+
+if(COMPILE_CUDA)
+  enable_language(CUDA)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)

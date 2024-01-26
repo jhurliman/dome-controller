@@ -2,8 +2,20 @@
   "configurations": [
     {
       "name": "Linux",
-      "includePath": ["${workspaceFolder}/**"],
+      "includePath": ["${workspaceFolder}/include"],
       "defines": ["__INTELLISENSE__", "USE_GPU"],
+      "compilerPath": "/usr/bin/clang++",
+      "cStandard": "c23",
+      "cppStandard": "c++20",
+      "compileCommands": "${workspaceFolder}/build/host/compile_commands.json"
+    },
+    {
+      "name": "MacOS",
+      "includePath": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/build/host/_deps/**/include"
+      ],
+      "defines": ["__INTELLISENSE__"],
       "compilerPath": "/usr/bin/clang++",
       "cStandard": "c23",
       "cppStandard": "c++20",
@@ -12,10 +24,11 @@
     {
       "name": "Jetson Nano",
       "includePath": [
-        "${workspaceFolder}/**",
-        "${workspaceFolder}/sysroot/jetson-t210/usr/include/**",
-        "${workspaceFolder}/sysroot/jetson-t210/usr/include/aarch64-linux-gnu/**",
-        "${workspaceFolder}/sysroot/jetson-t210/usr/local/cuda-10.2/targets/aarch64-linux/include/**"
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/build/jetson-nano/_deps/**/include",
+        "${workspaceFolder}/sysroot/jetson-t210/usr/include",
+        "${workspaceFolder}/sysroot/jetson-t210/usr/include/aarch64-linux-gnu",
+        "${workspaceFolder}/sysroot/jetson-t210/usr/local/cuda-10.2/targets/aarch64-linux/include"
       ],
       "defines": ["__INTELLISENSE__", "USE_GPU", "USE_T210"],
       "compilerPath": "/usr/bin/clang++",
