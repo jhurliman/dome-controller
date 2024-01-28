@@ -39,11 +39,6 @@ set(CUDA_NVTX_LIBRARY "${SYSROOT_CUDA}/lib64/libnvToolsExt.so")
 set(CMAKE_CUDA_COMPILER "${CMAKE_CXX_COMPILER}")
 set(CMAKE_CUDA_COMPILER_FORCED ON)
 
-# Set Clang flags for CUDA
-set(CMAKE_CUDA_FLAGS
-    "--target=aarch64-linux-gnu"
-    CACHE STRING "CUDA flags")
-
 # Adjust the default behavior of the FIND_XXX() commands: search programs in the host environment
 # only.
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -54,15 +49,25 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 # Set compiler/linker flags for cross-compiling
+set(CROSSCOMPILE_BUILD_FLAGS
+    "--target=aarch64-linux-gnu --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${GCC_TOOLCHAIN}")
 set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} --target=aarch64-linux-gnu --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${GCC_TOOLCHAIN}"
+    "${CMAKE_C_FLAGS} ${CROSSCOMPILE_BUILD_FLAGS}"
     CACHE STRING "C flags")
 set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} --target=aarch64-linux-gnu --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${GCC_TOOLCHAIN} -isystem ${SYSROOT_CUDA}/include"
+    "${CMAKE_CXX_FLAGS} ${CROSSCOMPILE_BUILD_FLAGS}"
     CACHE STRING "C++ flags")
+set(CMAKE_CUDA_FLAGS
+    "${CMAKE_CUDA_FLAGS} ${CROSSCOMPILE_BUILD_FLAGS}"
+    CACHE STRING "CUDA flags")
 set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld -L${SYSROOT_CUDA}/lib64"
     CACHE STRING "Linker flags")
+
+# Prevent CMake from adding `-isystem ${CMAKE_SYSROOT}/usr/include` when compiling CUDA files, which
+# messes up the include order for <cmath> and <math.h> and breaks compilation
+set(CMAKE_CUDA_IMPLICIT_INCLUDE_DIRECTORIES ${CMAKE_CUDA_IMPLICIT_INCLUDE_DIRECTORIES}
+                                            ${CMAKE_SYSROOT}/usr/include)
 
 # Set compiler flags for color diagnostics
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fansi-escape-codes -fcolor-diagnostics")
