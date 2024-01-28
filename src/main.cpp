@@ -135,8 +135,7 @@ int main() {
       }
 
       // Copy the data from the pulse buffer to our buffer
-      const void** data =
-        reinterpret_cast<const void**>(buffer.data() + buffer.size() - floatsToRead);
+      void* data = static_cast<void*>(buffer.data() + buffer.size() - floatsToRead);
       std::memcpy(data, pulseBuffer, bytesToRead);
 
       if (0 != pa_stream_drop(stream)) {
