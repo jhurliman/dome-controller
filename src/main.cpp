@@ -263,6 +263,10 @@ int main() {
     return 1;
   }
 
+  // FIXME: The MOTU 16-A advertises 24 output channels, but attempting to create a sink with 24
+  // channels fails with "Invalid argument". Force four channels for now
+  sink.sampleSpec.channels = 4;
+
   // Create a stream for playback to a sink
   pulse::ScopedPropertyList streamProps;
   pa_stream* stream = pa_stream_new_with_proplist(
