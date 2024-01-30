@@ -29,3 +29,11 @@ Papa-Sixteen
 
 MacOS: Ableton Live + Envelop4Live -> Max4Live -> OSC(?)
 Linux: OSC(?) -> C++ OSC recv and AmbiX decode -> PulseAudio 12ch -> MOTU 16-A
+
+## Getting Started
+
+Read the [Getting Started](docs/GettingStarted.md) guide to learn how to build and run the software.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
