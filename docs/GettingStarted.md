@@ -8,6 +8,7 @@ The following prerequisites must be installed on the development (or host) machi
 
 - [Visual Studio Code](https://code.visualstudio.com/) (optional)
 - [CMake](https://cmake.org/) (version 3.18 or higher)
+- [Ninja](https://ninja-build.org/)
 - [clang](https://clang.llvm.org/)
 - [clang-tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
@@ -30,13 +31,14 @@ sudo apt update && sudo apt install \
   clang-tools-$CLANG_VERSION \
   cmake \
   cmake-format \
+  docker-buildx \
   docker.io \
   gcovr \
   gdb-multiarch \
-  rsync \
   lld-$CLANG_VERSION \
-  qemu \
-  qemu-user-static
+  ninja-build \
+  qemu-user-static \
+  rsync
 sudo update-alternatives --install \
     /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100 \
   && sudo update-alternatives --install \
