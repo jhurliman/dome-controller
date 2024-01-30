@@ -4,8 +4,12 @@
 
 tl::expected<std::unique_ptr<CudaBufferPitched2D>, StreamError> CudaBufferPitched2D::create(
   size_t widthBytes, size_t height) {
+  if (widthBytes == 0 || height == 0) {
+    return std::unique_ptr<CudaBufferPitched2D>(
+      new CudaBufferPitched2D(nullptr, widthBytes, height, 0));
+  }
   CUDA_EXPECTED_INIT();
-  void* data;
+  void* data = nullptr;
   size_t pitch;
   CUDA_EXPECTED(cudaMallocPitch(&data, &pitch, widthBytes, height));
   return std::unique_ptr<CudaBufferPitched2D>(
