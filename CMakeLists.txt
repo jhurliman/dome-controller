@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(JetsonCrossCompilation LANGUAGES CXX CUDA)
+project(JetsonCrossCompilation LANGUAGES CXX)
 
 option(COMPILE_CPU "Compile the CPU backend" ON)
 option(COMPILE_CUDA "Compile the CUDA backend" ON)
@@ -11,6 +11,10 @@ if(NOT COMPILE_CPU
    AND NOT COMPILE_CUDA
    AND NOT COMPILE_T210)
   message(FATAL_ERROR "At least one backend must be compiled")
+endif()
+
+if(COMPILE_CUDA OR COMPILE_T210)
+  enable_language(CUDA)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
@@ -26,7 +30,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(PulseAudio REQUIRED)
 
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
-cpmaddpackage("gh:jeremy-rifkin/cpptrace#9dad2463b7b7a4f755ce1e93668b910206b9290f") # 0.3.1 + warning fix
+# cpptrace 0.3.1 + warning fix
+cpmaddpackage("gh:jeremy-rifkin/cpptrace#9dad2463b7b7a4f755ce1e93668b910206b9290f")
 cpmaddpackage("gh:TartanLlama/expected@1.1.0")
 
 # Work around dependencies including with `-I` instead of `-isystem`
@@ -34,6 +39,7 @@ get_target_property(FMT_INCLUDE_DIRS fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
 get_target_property(EXPECTED_INCLUDE_DIRS tl::expected INTERFACE_INCLUDE_DIRECTORIES)
 
 file(GLOB_RECURSE COMMON_SOURCES "src/backend/common/*.cpp")
+file(GLOB_RECURSE CUDA_SOURCES "src/backend/gpu/*.cpp" "src/backend/gpu/*.cu")
 
 if(COMPILE_CPU)
   cpmaddpackage("gh:oneapi-src/oneTBB@2021.11.0")
@@ -47,12 +53,14 @@ if(COMPILE_CPU)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/backend/cpu)
   target_include_directories(backend_cpu SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_cpu PUBLIC cpptrace::cpptrace tl::expected TBB::tbb)
+
+  target_include_directories(backend_cpu SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_cpu PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
 if(COMPILE_CUDA)
   find_package(CUDAToolkit REQUIRED)
 
-  file(GLOB_RECURSE CUDA_SOURCES "src/backend/gpu/*.cpp" "src/backend/gpu/*.cu")
   add_library(backend_cuda STATIC ${COMMON_SOURCES} ${CUDA_SOURCES})
   target_compile_options(backend_cuda PRIVATE ${PROJECT_WARNING_FLAGS})
   target_include_directories(
@@ -62,17 +70,18 @@ if(COMPILE_CUDA)
   target_include_directories(backend_cuda SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_cuda PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
                                             CUDA::nvToolsExt)
-  set_target_properties(backend_cuda PROPERTIES CUDA_ARCHITECTURES 53 CUDA_SEPARABLE_COMPILATION ON)
   target_compile_definitions(
     backend_cuda PUBLIC -DUSE_GPU -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
+
+  target_include_directories(backend_cuda SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_cuda PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
 if(COMPILE_T210)
   find_package(CUDAToolkit REQUIRED)
 
-  file(GLOB_RECURSE T210_SOURCES "src/backend/gpu/*.cpp" "src/backend/gpu/*.cu")
-  add_library(backend_t210 STATIC ${COMMON_SOURCES} ${T210_SOURCES})
+  add_library(backend_t210 STATIC ${COMMON_SOURCES} ${CUDA_SOURCES})
   target_compile_options(backend_t210 PRIVATE ${PROJECT_WARNING_FLAGS})
   target_include_directories(
     backend_t210
@@ -81,28 +90,28 @@ if(COMPILE_T210)
   target_include_directories(backend_t210 SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_t210 PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
                                             ${CUDA_NVTX_LIBRARY})
-  set_target_properties(backend_t210 PROPERTIES CUDA_ARCHITECTURES 53 CUDA_SEPARABLE_COMPILATION ON)
   target_compile_definitions(
     backend_t210 PUBLIC -DUSE_GPU -DUSE_T210 -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
+
+  target_include_directories(backend_t210 SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_t210 PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
-add_executable(myapp src/main.cpp)
-target_compile_options(myapp PRIVATE ${PROJECT_WARNING_FLAGS})
-target_include_directories(myapp PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
-target_include_directories(myapp SYSTEM PRIVATE ${PULSEAUDIO_INCLUDE_DIR})
-target_include_directories(myapp SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
-target_link_libraries(myapp PUBLIC ${PULSEAUDIO_LIBRARY})
-target_link_libraries(myapp PRIVATE fmt::fmt)
+add_executable(dome_controller src/main.cpp)
+target_compile_options(dome_controller PRIVATE ${PROJECT_WARNING_FLAGS})
+target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(dome_controller SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
+target_link_libraries(dome_controller PRIVATE fmt::fmt)
 if(COMPILE_T210)
-  target_link_libraries(myapp PRIVATE backend_t210)
-  target_include_directories(myapp PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/gpu)
+  target_link_libraries(dome_controller PRIVATE backend_t210)
+  target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/gpu)
 elseif(COMPILE_CUDA)
-  target_link_libraries(myapp PRIVATE backend_cuda)
-  target_include_directories(myapp PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/gpu)
+  target_link_libraries(dome_controller PRIVATE backend_cuda)
+  target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/gpu)
 else()
-  target_link_libraries(myapp PRIVATE backend_cpu)
-  target_include_directories(myapp PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/cpu)
+  target_link_libraries(dome_controller PRIVATE backend_cpu)
+  target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/cpu)
 endif()
 
 if(BUILD_TESTS)
