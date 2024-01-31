@@ -5,6 +5,10 @@
 tl::expected<std::unique_ptr<CudaBufferDevice2D>, StreamError> CudaBufferDevice2D::create(
   size_t widthBytes, size_t height, cudaStream_t stream) {
   return CudaBufferDevice::create(widthBytes * height, stream).map([&](auto&& bufferPtr) { // NOLINT
+    if (widthBytes == 0 || height == 0) {
+      return std::unique_ptr<CudaBufferDevice2D>(
+        new CudaBufferDevice2D(std::move(bufferPtr), widthBytes, height));
+    }
     return std::unique_ptr<CudaBufferDevice2D>(
       new CudaBufferDevice2D(std::move(bufferPtr), widthBytes, height));
   });
