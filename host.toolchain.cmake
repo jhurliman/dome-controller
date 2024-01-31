@@ -12,13 +12,6 @@ if(NOT APPLE)
       CACHE STRING "Linker flags")
 endif()
 
-set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
-if(NOT EXISTS ${CUDAToolkit_ROOT})
-  message(
-    FATAL_ERROR
-      "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda.sh")
-endif()
-
 # Set compiler flags for color diagnostics
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fansi-escape-codes -fcolor-diagnostics")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fansi-escape-codes -fcolor-diagnostics")

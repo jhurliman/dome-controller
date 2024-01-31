@@ -14,6 +14,14 @@ if(NOT COMPILE_CPU
 endif()
 
 if(COMPILE_CUDA OR COMPILE_T210)
+  set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
+  if(NOT EXISTS ${CUDAToolkit_ROOT})
+    message(
+      FATAL_ERROR
+        "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda.sh"
+    )
+  endif()
+
   enable_language(CUDA)
 endif()
 
