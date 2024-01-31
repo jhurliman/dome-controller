@@ -38,6 +38,7 @@ set(CUDA_NVTX_LIBRARY "${SYSROOT_CUDA}/lib64/libnvToolsExt.so")
 # Specify Clang as the CUDA compiler
 set(CMAKE_CUDA_COMPILER "${CMAKE_CXX_COMPILER}")
 set(CMAKE_CUDA_COMPILER_FORCED ON)
+set(CMAKE_CUDA_ARCHITECTURES "53")
 
 # Adjust the default behavior of the FIND_XXX() commands: search programs in the host environment
 # only.

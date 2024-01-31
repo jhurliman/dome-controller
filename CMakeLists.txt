@@ -70,7 +70,6 @@ if(COMPILE_CUDA)
   target_include_directories(backend_cuda SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_cuda PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
                                             CUDA::nvToolsExt)
-  set_target_properties(backend_cuda PROPERTIES CUDA_ARCHITECTURES 53 CUDA_SEPARABLE_COMPILATION ON)
   target_compile_definitions(
     backend_cuda PUBLIC -DUSE_GPU -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
@@ -91,7 +90,6 @@ if(COMPILE_T210)
   target_include_directories(backend_t210 SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_t210 PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
                                             ${CUDA_NVTX_LIBRARY})
-  set_target_properties(backend_t210 PROPERTIES CUDA_ARCHITECTURES 53 CUDA_SEPARABLE_COMPILATION ON)
   target_compile_definitions(
     backend_t210 PUBLIC -DUSE_GPU -DUSE_T210 -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
