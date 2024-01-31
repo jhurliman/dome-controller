@@ -24,6 +24,13 @@ if(NOT EXISTS ${GCC_TOOLCHAIN})
       "GCC_TOOLCHAIN does not exist: ${GCC_TOOLCHAIN}\nPlease run ./scripts/extract-sysroot.sh")
 endif()
 
+set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
+if(NOT EXISTS ${CUDAToolkit_ROOT})
+  message(
+    FATAL_ERROR
+      "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda.sh")
+endif()
+
 set(CUDA_TOOLKIT_INCLUDE "${SYSROOT_CUDA}/include")
 set(CUDA_CUDART_LIBRARY "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_NVTX_LIBRARY "${SYSROOT_CUDA}/lib64/libnvToolsExt.so")
