@@ -98,7 +98,7 @@ There is a one-time setup process to create the sysroot for your target Jetson d
 ./scripts/extract-sysroot.sh --board-id t210
 
 # Extract the CUDA 10.2 toolkit for the host architecture
-./scripts/extract-cuda.sh
+./scripts/extract-cuda-10.2.sh
 ```
 
 The second command will initially complain about missing `.deb` files, with links to download them from the NVIDIA developer site (login required). Once you have downloaded the missing files, run the command again to extract the CUDA toolkit.

@@ -2,6 +2,8 @@
 
 set -e
 
+CUDA_VERSION="10.2"
+
 BASE_CROSS_URL="https://developer.nvidia.com/assets/embedded/secure/tools/files/jetpack-sdks/jetpack-4.6/JETPACK_46_b194/"
 BASE_CUDA_URL="https://developer.nvidia.com/assets/embedded/secure/tools/files/jetpack-sdks/jetpack-4.6/JETPACK_46_b194/ubuntu1804/"
 CROSS_DEB="cuda-repo-cross-aarch64-ubuntu1804-10-2-local_10.2.460-1_all.deb"
@@ -27,12 +29,12 @@ if [[ "${DEBS_EXIST}" -eq 0 ]]; then
 fi
 
 # Build the docker image that will contain the CUDA toolkit
-docker build -t "cuda-10.2_amd64" -f "../scripts/Dockerfile.cuda-10.2_amd64" .
-docker create --name "cuda-10.2_amd64-container" "cuda-10.2_amd64"
+docker build -t "cuda-${CUDA_VERSION}_amd64" -f "../scripts/Dockerfile.cuda-${CUDA_VERSION}_amd64" .
+docker create --name "cuda-${CUDA_VERSION}_amd64-container" "cuda-${CUDA_VERSION}_amd64"
 
 # Extract the CUDA toolkit from the docker image
-rm -rf "cuda-10.2_amd64"
-docker cp "cuda-10.2_amd64-container:/usr/local/cuda-10.2" "cuda-10.2_amd64"
-docker rm "cuda-10.2_amd64-container"
+rm -rf "cuda-${CUDA_VERSION}_amd64"
+docker cp "cuda-${CUDA_VERSION}_amd64-container:/usr/local/cuda-${CUDA_VERSION}" "cuda-${CUDA_VERSION}_amd64"
+docker rm "cuda-${CUDA_VERSION}_amd64-container"
 
-echo "CUDA toolkit extracted to $(pwd)/cuda-10.2_amd64"
+echo "CUDA toolkit extracted to $(pwd)/cuda-${CUDA_VERSION}_amd64"

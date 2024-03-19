@@ -39,3 +39,6 @@ nvidia/
 
 # Extracted sysroot and toolchain
 sysroot/
+
+# OS-specific files
+*.DS_Store

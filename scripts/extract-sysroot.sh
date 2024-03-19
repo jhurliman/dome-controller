@@ -32,9 +32,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# For T210 (Jetson Nano)
 TOOLCHAIN_URL="https://developer.nvidia.com/embedded/dlc/l4t-gcc-7-3-1-toolchain-64-bit"
 TOOLCHAIN_DIRECTORY="gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu"
 TOOLCHAIN_FILENAME="${TOOLCHAIN_DIRECTORY}.tar.xz"
+
+# Handle T194 (Jetson AGX Xavier)
+if [[ "$BOARD_ID" == "t194" ]]; then
+    TOOLCHAIN_URL="https://developer.nvidia.com/embedded/jetson-linux/bootlin-toolchain-gcc-93"
+    TOOLCHAIN_DIRECTORY="bootlin-toolchain-gcc-93"
+    TOOLCHAIN_FILENAME="${TOOLCHAIN_DIRECTORY}.tar.gz"
+fi
 
 cd "$(dirname "$0")"
 
@@ -77,6 +85,7 @@ if [[ ! -d "${TOOLCHAIN_DIRECTORY}" ]]; then
     if [[ ! -f "${TOOLCHAIN_FILENAME}" ]]; then
         wget -O "${TOOLCHAIN_FILENAME}" "${TOOLCHAIN_URL}"
     fi
-    tar -xpf "${TOOLCHAIN_FILENAME}"
+    mkdir -p "${TOOLCHAIN_DIRECTORY}"
+    tar -xpf "${TOOLCHAIN_FILENAME}" -C "${TOOLCHAIN_DIRECTORY}"
     echo "toolchain extracted to $(pwd)/${TOOLCHAIN_DIRECTORY}"
 fi
