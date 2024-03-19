@@ -6,29 +6,28 @@ set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
 # Set the sysroot path
-set(CMAKE_SYSROOT "${CMAKE_CURRENT_LIST_DIR}/sysroot/jetson-t210")
+set(CMAKE_SYSROOT "${CMAKE_CURRENT_LIST_DIR}/sysroot/jetson-t194")
 if(NOT EXISTS ${CMAKE_SYSROOT})
   message(
     FATAL_ERROR
-      "CMAKE_SYSROOT does not exist: ${CMAKE_SYSROOT}\nPlease run ./scripts/extract-sysroot.sh --board-id t210")
+      "CMAKE_SYSROOT does not exist: ${CMAKE_SYSROOT}\nPlease run ./scripts/extract-sysroot.sh --board-id t194")
 endif()
 
-set(SYSROOT_CUDA "${CMAKE_SYSROOT}/usr/local/cuda-10.2")
+set(SYSROOT_CUDA "${CMAKE_SYSROOT}/usr/local/cuda-11.4")
 
 # Path to the GCC toolchain for the target architecture
-set(GCC_TOOLCHAIN
-    "${CMAKE_CURRENT_LIST_DIR}/sysroot/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu")
+set(GCC_TOOLCHAIN "${CMAKE_CURRENT_LIST_DIR}/sysroot/bootlin-toolchain-gcc-93")
 if(NOT EXISTS ${GCC_TOOLCHAIN})
   message(
     FATAL_ERROR
-      "GCC_TOOLCHAIN does not exist: ${GCC_TOOLCHAIN}\nPlease run ./scripts/extract-sysroot.sh --board-id t210")
+      "GCC_TOOLCHAIN does not exist: ${GCC_TOOLCHAIN}\nPlease run ./scripts/extract-sysroot.sh --board-id t194")
 endif()
 
-set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
+set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-11.4_amd64")
 if(NOT EXISTS ${CUDAToolkit_ROOT})
   message(
     FATAL_ERROR
-      "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda-10.2.sh")
+      "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda-11.4.sh")
 endif()
 
 set(CUDA_TOOLKIT_INCLUDE "${SYSROOT_CUDA}/include")
