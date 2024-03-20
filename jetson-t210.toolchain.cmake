@@ -32,6 +32,7 @@ if(NOT EXISTS ${CUDAToolkit_ROOT})
 endif()
 
 set(CUDA_TOOLKIT_INCLUDE "${SYSROOT_CUDA}/include")
+set(CUDA_CUDART "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_CUDART_LIBRARY "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_NVTX_LIBRARY "${SYSROOT_CUDA}/lib64/libnvToolsExt.so")
 
