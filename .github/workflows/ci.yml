@@ -28,6 +28,10 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${{ matrix.clang-version }} 999
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
       - name: Install CMake/Ninja/PulseAudio
         run: |
           sudo apt-get update
@@ -40,14 +44,16 @@ jobs:
           lfs: true
       - name: clang-format
         run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
-      - name: Install CUDA Toolkit (x86_64)
+      - name: Extract sysroot (Jetson Nano)
+        run: ./scripts/extract-sysroot.sh --board-id t210
+      - name: Extract CUDA Toolkit (x86_64)
         run: ./scripts/extract-cuda.sh
       - name: Build for host (x86_64)
         run: |
           cmake --version
           make
-      # - name: Build for Jetson Nano (aarch64)
-      #   run: make jetson-nano
+      - name: Build for Jetson Nano (aarch64)
+        run: make jetson-nano
       - name: clang-tidy
         run: clang-tidy -p build/host --config-file=.clang-tidy --use-color $(find src/ -name '*.cpp')
       - name: Run tests
