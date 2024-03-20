@@ -32,12 +32,17 @@ if(NOT EXISTS ${CUDAToolkit_ROOT})
 endif()
 
 set(CUDA_TOOLKIT_INCLUDE "${SYSROOT_CUDA}/include")
+set(CUDA_CUDART "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_CUDART_LIBRARY "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_NVTX_LIBRARY "${SYSROOT_CUDA}/lib64/libnvToolsExt.so")
 
-# Specify Clang as the CUDA compiler
+# Specify Clang as the CUDA compiler, explicitly set the target architecture and the linker for CUDA
+# code
 set(CMAKE_CUDA_COMPILER "${CMAKE_CXX_COMPILER}")
-set(CMAKE_CUDA_COMPILER_FORCED ON)
+set(CMAKE_CUDA_COMPILER_TARGET "aarch64-linux-gnu")
+set(CMAKE_CUDA_FLAGS "-fuse-ld=lld")
+
+# sm_53 is the compute capability of the Jetson Nano (t210)
 set(CMAKE_CUDA_ARCHITECTURES "53")
 
 # Adjust the default behavior of the FIND_XXX() commands: search programs in the host environment
