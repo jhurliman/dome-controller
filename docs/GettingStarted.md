@@ -101,8 +101,6 @@ There is a one-time setup process to create the sysroot for your target Jetson d
 ./scripts/extract-cuda.sh
 ```
 
-The second command will initially complain about missing `.deb` files, with links to download them from the NVIDIA developer site (login required). Once you have downloaded the missing files, run the command again to extract the CUDA toolkit.
-
 With the prerequisites installed and setup completed, you are ready for development. Look at the [CMakeLists.txt](CMakeLists.txt) file to see how the starter example application is configured. The [Makefile](Makefile) provides easy access to common tasks:
 
 ```bash
