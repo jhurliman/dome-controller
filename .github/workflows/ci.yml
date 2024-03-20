@@ -33,14 +33,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
-            cmake-format \
             ninja-build \
             libpulse-dev
       - uses: actions/checkout@v3
         with:
           lfs: true
-      - name: cmake-format
-        run: cmake-format --check --config-file .cmake-format.yaml CMakeLists.txt $(find . cmake -maxdepth 1 -name '*.cmake')
       - name: clang-format
         run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
       - name: Install CUDA Toolkit (x86_64)

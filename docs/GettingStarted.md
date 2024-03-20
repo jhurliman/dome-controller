@@ -12,7 +12,6 @@ The following prerequisites must be installed on the development (or host) machi
 - [clang](https://clang.llvm.org/)
 - [clang-tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
-- [cmake-format](https://github.com/cheshirekow/cmake_format)
 - [lld](https://lld.llvm.org/)
 - [gdb-multiarch](https://www.gnu.org/software/gdb/) (for debugging)
 - [rsync](https://rsync.samba.org/) (for deployment to Jetson device)
@@ -30,7 +29,6 @@ sudo apt update && sudo apt install \
   clang-tidy-$CLANG_VERSION \
   clang-tools-$CLANG_VERSION \
   cmake \
-  cmake-format \
   docker-buildx \
   docker.io \
   gcovr \
