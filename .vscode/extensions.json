@@ -2,7 +2,8 @@
 {
   "recommendations": [
     "esbenp.prettier-vscode",
-    "llvm-vs-code-extensions.vscode-clangd"
+    "llvm-vs-code-extensions.vscode-clangd",
+    "twxs.cmake"
   ],
   "unwantedRecommendations": []
 }

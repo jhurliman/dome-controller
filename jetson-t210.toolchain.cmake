@@ -17,7 +17,7 @@ set(SYSROOT_CUDA "${CMAKE_SYSROOT}/usr/local/cuda-10.2")
 
 # Path to the GCC toolchain for the target architecture
 set(GCC_TOOLCHAIN
-    "${CMAKE_CURRENT_LIST_DIR}/sysroot/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu")
+    "${CMAKE_CURRENT_LIST_DIR}/sysroot/gcc-linaro-7.3.1-2018-1.05-x86_64_aarch64-linux-gnu")
 if(NOT EXISTS ${GCC_TOOLCHAIN})
   message(
     FATAL_ERROR

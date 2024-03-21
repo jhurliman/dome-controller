@@ -35,7 +35,7 @@
       "compilerArgs": [
         "--target=aarch64-linux-gnu",
         "--sysroot=${workspaceFolder}/sysroot/jetson-t210",
-        "--gcc-toolchain=${workspaceFolder}/sysroot/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu"
+        "--gcc-toolchain=${workspaceFolder}/sysroot/gcc-linaro-7.3.1-2018-1.05-x86_64_aarch64-linux-gnu"
       ],
       "cStandard": "c23",
       "cppStandard": "c++20",
