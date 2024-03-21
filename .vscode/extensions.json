@@ -1,5 +1,8 @@
 // -*- jsonc -*-
 {
-  "recommendations": ["esbenp.prettier-vscode", "ms-vscode.cpptools"],
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "llvm-vs-code-extensions.vscode-clangd"
+  ],
   "unwantedRecommendations": []
 }

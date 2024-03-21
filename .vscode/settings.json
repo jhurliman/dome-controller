@@ -9,13 +9,14 @@
   "files.trimTrailingWhitespace": true,
 
   "[cpp]": {
-    "editor.defaultFormatter": "ms-vscode.cpptools"
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
   "[cuda-cpp]": {
-    "editor.defaultFormatter": "ms-vscode.cpptools"
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
 
   "C_Cpp.autoAddFileAssociations": false,
+  "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.configureOnOpen": false,
 
   "search.exclude": {
