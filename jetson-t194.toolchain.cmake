@@ -27,7 +27,7 @@ set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-11.4_amd64")
 if(NOT EXISTS ${CUDAToolkit_ROOT})
   message(
     FATAL_ERROR
-      "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda-11.4.sh")
+      "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda.sh --cuda 11.4")
 endif()
 
 set(CUDA_TOOLKIT_INCLUDE "${SYSROOT_CUDA}/include")

@@ -12,7 +12,6 @@ The following prerequisites must be installed on the development (or host) machi
 - [clang](https://clang.llvm.org/)
 - [clang-tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
-- [cmake-format](https://github.com/cheshirekow/cmake_format)
 - [lld](https://lld.llvm.org/)
 - [gdb-multiarch](https://www.gnu.org/software/gdb/) (for debugging)
 - [rsync](https://rsync.samba.org/) (for deployment to Jetson device)
@@ -30,7 +29,6 @@ sudo apt update && sudo apt install \
   clang-tidy-$CLANG_VERSION \
   clang-tools-$CLANG_VERSION \
   cmake \
-  cmake-format \
   docker-buildx \
   docker.io \
   gcovr \
@@ -98,10 +96,8 @@ There is a one-time setup process to create the sysroot for your target Jetson d
 ./scripts/extract-sysroot.sh --board-id t210
 
 # Extract the CUDA 10.2 toolkit for the host architecture
-./scripts/extract-cuda-10.2.sh
+./scripts/extract-cuda.sh --cuda 10.2
 ```
-
-The second command will initially complain about missing `.deb` files, with links to download them from the NVIDIA developer site (login required). Once you have downloaded the missing files, run the command again to extract the CUDA toolkit.
 
 With the prerequisites installed and setup completed, you are ready for development. Look at the [CMakeLists.txt](CMakeLists.txt) file to see how the starter example application is configured. The [Makefile](Makefile) provides easy access to common tasks:
 

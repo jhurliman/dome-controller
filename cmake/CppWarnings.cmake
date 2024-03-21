@@ -51,5 +51,5 @@ set(PROJECT_WARNING_FLAGS
   # Disabled warnings
   "-Wno-c++98-compat"
   "-Wno-c++98-compat-pedantic"
-  "-Wno-unknown-cuda-version"
+  "-Wno-unused-command-line-argument"
 )
