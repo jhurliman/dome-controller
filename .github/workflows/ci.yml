@@ -37,6 +37,12 @@ jobs:
             cmake \
             ninja-build \
             libpulse-dev
+      - name: Install CUDA Toolkit 10.2 (x86_64)
+        uses: Jimver/cuda-toolkit@v0.2.11
+        id: cuda-toolkit
+        with:
+          cuda: "10.2.89"
+          linux-local-args: '["--toolkit", "--override"]'
 
       # Checkout
       - uses: actions/checkout@v3
