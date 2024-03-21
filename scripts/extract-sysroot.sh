@@ -33,7 +33,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 TOOLCHAIN_URL="https://developer.nvidia.com/embedded/dlc/l4t-gcc-7-3-1-toolchain-64-bit"
-TOOLCHAIN_DIRECTORY="gcc-linaro-7.3.1-2018-1.05-x86_64_aarch64-linux-gnu"
+TOOLCHAIN_DIRECTORY="gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu"
 TOOLCHAIN_FILENAME="${TOOLCHAIN_DIRECTORY}.tar.xz"
 
 cd "$(dirname "$0")"

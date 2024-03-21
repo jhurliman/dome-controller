@@ -56,9 +56,9 @@ jobs:
 
       - name: Download and extract GCC toolchain (aarch64)
         run: |
-          wget --no-verbose --show-progress --progress=dot:mega https://developer.nvidia.com/embedded/dlc/l4t-gcc-7-3-1-toolchain-64-bit -O gcc-linaro-7.3.1-2018-1.05-x86_64_aarch64-linux-gnu.tar.xz
-          tar -xJpf gcc-linaro-7.3.1-2018-1.05-x86_64_aarch64-linux-gnu.tar.xz -C ./sysroot
-          ls -lh ./sysroot/gcc-linaro-7.3.1-2018-1.05-x86_64_aarch64-linux-gnu
+          wget --no-verbose --show-progress --progress=dot:mega https://developer.nvidia.com/embedded/dlc/l4t-gcc-7-3-1-toolchain-64-bit -O gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
+          tar -xJpf gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz -C ./sysroot
+          ls -lh ./sysroot/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu
 
       # Fetch cached output of ./scripts/extract-cuda.sh
       - name: Download and extract CUDA Toolkit 10.2 (x86_64)
