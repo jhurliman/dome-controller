@@ -57,9 +57,9 @@ jobs:
       # Fetch cached output of ./scripts/extract-cuda.sh
       - name: Download and extract CUDA Toolkit 10.2 (x86_64)
         run: |
-          mkdir -p ./nvidia/cuda-10.2_amd64
+          mkdir -p ./nvidia
           wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
-          tar -xzpf cuda.tar.gz -C ./nvidia/cuda-10.2_amd64
+          tar -xzpf cuda.tar.gz -C ./nvidia
           ls -lh ./nvidia/cuda-10.2_amd64
 
       # Build
