@@ -29,6 +29,7 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${{ matrix.clang-version }} 999
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${{ matrix.clang-version }} 999
       - name: Install CMake/Ninja/PulseAudio
         run: |
           sudo apt-get update
@@ -46,35 +47,11 @@ jobs:
       - name: clang-format
         run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
 
-      # Fetch cached output of ./scripts/extract-sysroot.sh --board-id t210
-      - name: Download and extract Jetson Nano sysroot (aarch64)
-        run: |
-          mkdir -p ./sysroot/jetson-t210
-          wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/jetson-t210-sysroot.tar.gz -O jetson-t210-sysroot.tar.gz
-          tar -xzpf jetson-t210-sysroot.tar.gz -C ./sysroot/jetson-t210
-          ls -lh ./sysroot/jetson-t210
-
-      - name: Download and extract GCC toolchain (aarch64)
-        run: |
-          wget --no-verbose --show-progress --progress=dot:mega https://developer.nvidia.com/embedded/dlc/l4t-gcc-7-3-1-toolchain-64-bit -O gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz
-          tar -xJpf gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu.tar.xz -C ./sysroot
-          ls -lh ./sysroot/gcc-linaro-7.3.1-2018.05-x86_64_aarch64-linux-gnu
-
-      # Fetch cached output of ./scripts/extract-cuda.sh
-      - name: Download and extract CUDA Toolkit 10.2 (x86_64)
-        run: |
-          mkdir -p ./nvidia
-          wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
-          tar -xzpf cuda.tar.gz -C ./nvidia
-          ls -lh ./nvidia/cuda-10.2_amd64
-
       # Build
       - name: Build for host (x86_64)
         run: |
           cmake --version
           make
-      - name: Build for Jetson Nano (aarch64)
-        run: make jetson-nano
 
       # Lint
       - name: clang-tidy
