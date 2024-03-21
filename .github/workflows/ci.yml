@@ -8,30 +8,7 @@ on:
     branches: ["*"]
 
 jobs:
-  extract-sysroot:
-    runs-on: ubuntu-latest
-    name: Extract Jetson Nano sysroot (aarch64)
-    steps:
-      # Fetch cached output of ./scripts/extract-sysroot.sh --board-id t210
-      - name: Download and extract Jetson Nano sysroot (aarch64)
-        run: |
-          mkdir -p ./sysroot/jetson-t210
-          wget https://jetson-crosscompile.s3.amazonaws.com/jetson-t210-sysroot.tar.gz -O jetson-t210-sysroot.tar.gz
-          tar -xzpf jetson-t210-sysroot.tar.gz -C ./sysroot/jetson-t210
-
-  extract-cuda:
-    runs-on: ubuntu-latest
-    name: Extract CUDA Toolkit 10.2 (x86_64)
-    steps:
-      # Fetch cached output of ./scripts/extract-cuda.sh
-      - name: Download and extract CUDA Toolkit 10.2 (x86_64)
-        run: |
-          mkdir -p ./nvidia/cuda-10.2_amd64
-          wget https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
-          tar -xzpf cuda.tar.gz -C ./nvidia/cuda-10.2_amd64
-
   build:
-    needs: [extract-sysroot, extract-cuda]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -68,6 +45,20 @@ jobs:
       # Code formatting
       - name: clang-format
         run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
+
+      # Fetch cached output of ./scripts/extract-sysroot.sh --board-id t210
+      - name: Download and extract Jetson Nano sysroot (aarch64)
+        run: |
+          mkdir -p ./sysroot/jetson-t210
+          wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/jetson-t210-sysroot.tar.gz -O jetson-t210-sysroot.tar.gz
+          tar -xzpf jetson-t210-sysroot.tar.gz -C ./sysroot/jetson-t210
+
+      # Fetch cached output of ./scripts/extract-cuda.sh
+      - name: Download and extract CUDA Toolkit 10.2 (x86_64)
+        run: |
+          mkdir -p ./nvidia/cuda-10.2_amd64
+          wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
+          tar -xzpf cuda.tar.gz -C ./nvidia/cuda-10.2_amd64
 
       # Build
       - name: Build for host (x86_64)
