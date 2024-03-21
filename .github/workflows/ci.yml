@@ -8,7 +8,30 @@ on:
     branches: ["*"]
 
 jobs:
+  extract-sysroot:
+    runs-on: ubuntu-latest
+    name: Extract Jetson Nano sysroot (aarch64)
+    steps:
+      # Fetch cached output of ./scripts/extract-sysroot.sh --board-id t210
+      - name: Download and extract Jetson Nano sysroot (aarch64)
+        run: |
+          mkdir -p ./sysroot/jetson-t210
+          wget https://jetson-crosscompile.s3.amazonaws.com/jetson-t210-sysroot.tar.gz -O jetson-t210-sysroot.tar.gz
+          tar -xzpf jetson-t210-sysroot.tar.gz -C ./sysroot/jetson-t210
+
+  extract-cuda:
+    runs-on: ubuntu-latest
+    name: Extract CUDA Toolkit 10.2 (x86_64)
+    steps:
+      # Fetch cached output of ./scripts/extract-cuda.sh
+      - name: Download and extract CUDA Toolkit 10.2 (x86_64)
+        run: |
+          mkdir -p ./nvidia/cuda-10.2_amd64
+          wget https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
+          tar -xzpf cuda.tar.gz -C ./nvidia/cuda-10.2_amd64
+
   build:
+    needs: [extract-sysroot, extract-cuda]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -16,6 +39,7 @@ jobs:
         clang-version:
           - 15
     steps:
+      # Setup
       - name: Install clang-${{ matrix.clang-version }}
         uses: egor-tensin/setup-clang@v1
         with:
@@ -28,10 +52,6 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${{ matrix.clang-version }} 999
           sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${{ matrix.clang-version }} 999
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
       - name: Install CMake/Ninja/PulseAudio
         run: |
           sudo apt-get update
@@ -39,22 +59,28 @@ jobs:
             cmake \
             ninja-build \
             libpulse-dev
+
+      # Checkout
       - uses: actions/checkout@v3
         with:
           lfs: true
+
+      # Code formatting
       - name: clang-format
         run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
-      - name: Extract sysroot (Jetson Nano)
-        run: ./scripts/extract-sysroot.sh --board-id t210
-      - name: Extract CUDA Toolkit (x86_64)
-        run: ./scripts/extract-cuda.sh
+
+      # Build
       - name: Build for host (x86_64)
         run: |
           cmake --version
           make
       - name: Build for Jetson Nano (aarch64)
         run: make jetson-nano
+
+      # Lint
       - name: clang-tidy
         run: clang-tidy -p build/host --config-file=.clang-tidy --use-color $(find src/ -name '*.cpp')
+
+      # Test
       - name: Run tests
         run: ctest --preset host-cpu
