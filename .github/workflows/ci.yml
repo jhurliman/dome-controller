@@ -52,6 +52,7 @@ jobs:
           mkdir -p ./sysroot/jetson-t210
           wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/jetson-t210-sysroot.tar.gz -O jetson-t210-sysroot.tar.gz
           tar -xzpf jetson-t210-sysroot.tar.gz -C ./sysroot/jetson-t210
+          ls -lh ./sysroot/jetson-t210
 
       # Fetch cached output of ./scripts/extract-cuda.sh
       - name: Download and extract CUDA Toolkit 10.2 (x86_64)
@@ -59,6 +60,7 @@ jobs:
           mkdir -p ./nvidia/cuda-10.2_amd64
           wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
           tar -xzpf cuda.tar.gz -C ./nvidia/cuda-10.2_amd64
+          ls -lh ./nvidia/cuda-10.2_amd64
 
       # Build
       - name: Build for host (x86_64)
