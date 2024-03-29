@@ -47,7 +47,7 @@ jobs:
       - name: clang-format
         run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
 
-      # Fetch cached output of ./scripts/extract-cuda.sh
+      # Fetch cached output of ./scripts/extract-cuda.sh --cuda 10.2
       - name: Download and extract CUDA Toolkit 10.2 (x86_64)
         run: |
           mkdir -p ./nvidia

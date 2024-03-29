@@ -2,8 +2,11 @@
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
-if(NOT EXISTS ${CUDAToolkit_ROOT})
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-11.4_amd64")
+  set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-11.4_amd64")
+elseif(EXISTS "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
+  set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
+else()
   message(
     FATAL_ERROR
       "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda.sh")

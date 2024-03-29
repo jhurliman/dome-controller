@@ -96,7 +96,7 @@ There is a one-time setup process to create the sysroot for your target Jetson d
 ./scripts/extract-sysroot.sh --board-id t210
 
 # Extract the CUDA 10.2 toolkit for the host architecture
-./scripts/extract-cuda.sh
+./scripts/extract-cuda.sh --cuda 10.2
 ```
 
 With the prerequisites installed and setup completed, you are ready for development. Look at the [CMakeLists.txt](CMakeLists.txt) file to see how the starter example application is configured. The [Makefile](Makefile) provides easy access to common tasks:
