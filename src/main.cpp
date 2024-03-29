@@ -1,8 +1,4 @@
-#include "cuda/CudaBufferUnified.hpp"
-#include "cuda/arithmetic.hpp"
-#include "cuda/stream.hpp"
-#include "pulse/AutoPulseLock.hpp"
-#include "pulse/MainloopSync.hpp"
+#include "errors.hpp"
 #include "pulse/ScopedPropertyList.hpp"
 #include "pulse/Sink.hpp"
 #include "pulse/Source.hpp"
@@ -47,9 +43,11 @@ std::vector<uint8_t> FloatToS24LE(const std::vector<float>& input) {
     const int32_t scaled = int32_t(std::max(-1.0f, std::min(1.0f, sample)) * scale);
 
     // Assign bytes directly using indexing
-    output[index++] = uint8_t(scaled & 0xFF);
-    output[index++] = uint8_t((scaled >> 8) & 0xFF);
-    output[index++] = uint8_t((scaled >> 16) & 0xFF);
+    output[index++] = uint8_t(scaled & 0xFF); // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+    output[index++] =
+      uint8_t((scaled >> 8) & 0xFF); // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+    output[index++] =
+      uint8_t((scaled >> 16) & 0xFF); // NOLINT(cppcoreguidelines-avoid-magic-numbers)
   }
 
   return output;
