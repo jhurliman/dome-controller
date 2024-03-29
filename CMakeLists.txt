@@ -4,16 +4,18 @@ project(JetsonCrossCompilation LANGUAGES CXX)
 
 option(COMPILE_CPU "Compile the CPU backend" ON)
 option(COMPILE_CUDA "Compile the CUDA backend" ON)
+option(COMPILE_T194 "Compile the Jetson AGX Xavier backend" OFF)
 option(COMPILE_T210 "Compile the Jetson Nano backend" OFF)
 option(BUILD_TESTS "Build tests" ON)
 
 if(NOT COMPILE_CPU
    AND NOT COMPILE_CUDA
+   AND NOT COMPILE_T194
    AND NOT COMPILE_T210)
   message(FATAL_ERROR "At least one backend must be compiled")
 endif()
 
-if(COMPILE_CUDA OR COMPILE_T210)
+if(COMPILE_CUDA OR COMPILE_T194 OR COMPILE_T210)
   enable_language(CUDA)
 endif()
 
@@ -78,6 +80,26 @@ if(COMPILE_CUDA)
   target_link_libraries(backend_cuda PUBLIC ${PULSEAUDIO_LIBRARY})
 endif()
 
+if(COMPILE_T194)
+  find_package(CUDAToolkit REQUIRED)
+
+  add_library(backend_t194 STATIC ${COMMON_SOURCES} ${CUDA_SOURCES})
+  target_compile_options(backend_t194 PRIVATE ${PROJECT_WARNING_FLAGS})
+  target_include_directories(
+    backend_t194
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/backend/gpu)
+  target_include_directories(backend_t194 SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
+  target_link_libraries(backend_t194 PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
+                                            ${CUDA_NVTX_LIBRARY})
+  target_compile_definitions(
+    backend_t194 PUBLIC -DUSE_GPU -DUSE_T194 -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
+                        -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
+
+  target_include_directories(backend_t194 SYSTEM PUBLIC ${PULSEAUDIO_INCLUDE_DIR})
+  target_link_libraries(backend_t194 PUBLIC ${PULSEAUDIO_LIBRARY})
+endif()
+
 if(COMPILE_T210)
   find_package(CUDAToolkit REQUIRED)
 
@@ -103,7 +125,10 @@ target_compile_options(dome_controller PRIVATE ${PROJECT_WARNING_FLAGS})
 target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_include_directories(dome_controller SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 target_link_libraries(dome_controller PRIVATE fmt::fmt)
-if(COMPILE_T210)
+if(COMPILE_T194)
+  target_link_libraries(dome_controller PRIVATE backend_t194)
+  target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/gpu)
+elseif(COMPILE_T210)
   target_link_libraries(dome_controller PRIVATE backend_t210)
   target_include_directories(dome_controller PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/backend/gpu)
 elseif(COMPILE_CUDA)
@@ -120,3 +145,11 @@ if(BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
+
+# Copy compile_commands.json to the root of `build/` so clangd and other tools can find it
+add_custom_target(
+  copy-compile-commands ALL
+  ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_BINARY_DIR}/compile_commands.json
+    ${CMAKE_CURRENT_LIST_DIR}/build
+)

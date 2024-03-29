@@ -169,7 +169,7 @@ std::optional<StreamError> CudaBufferUnified::prefetch(
   //
   // Note that `cudaStreamAttachMemAsync()`-based prefetching is not implemented
   // in QNX and will have no effect.
-#ifdef USE_T210
+#if defined(USE_T194) || defined(USE_T210)
   CUDA_OPTIONAL(cudaStreamAttachMemAsync(stream, data_, size_, static_cast<unsigned int>(flag)));
 #else
   int dstDevice = cudaCpuDeviceId;
