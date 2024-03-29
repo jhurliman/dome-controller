@@ -2,8 +2,14 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
 # Specify the cross compilers
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CUDA_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++")
+
+set(TARGET_TRIPLE "aarch64-linux-gnu")
+set(CMAKE_C_COMPILER_TARGET "${TARGET_TRIPLE}")
+set(CMAKE_CUDA_COMPILER_TARGET "${TARGET_TRIPLE}")
+set(CMAKE_CXX_COMPILER_TARGET "${TARGET_TRIPLE}")
 
 # Set the sysroot path
 set(CMAKE_SYSROOT "${CMAKE_CURRENT_LIST_DIR}/sysroot/jetson-t210")
@@ -24,6 +30,7 @@ if(NOT EXISTS ${GCC_TOOLCHAIN})
       "GCC_TOOLCHAIN does not exist: ${GCC_TOOLCHAIN}\nPlease run ./scripts/extract-sysroot.sh --board-id t210")
 endif()
 
+# Path to the host (x86_64) vendored CUDA toolkit
 set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-10.2_amd64")
 if(NOT EXISTS ${CUDAToolkit_ROOT})
   message(
@@ -36,10 +43,8 @@ set(CUDA_CUDART "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_CUDART_LIBRARY "${SYSROOT_CUDA}/lib64/libcudart.so")
 set(CUDA_NVTX_LIBRARY "${SYSROOT_CUDA}/lib64/libnvToolsExt.so")
 
-# Specify Clang as the CUDA compiler, explicitly set the target architecture and the linker for CUDA
-# code
-set(CMAKE_CUDA_COMPILER "${CMAKE_CXX_COMPILER}")
-set(CMAKE_CUDA_COMPILER_TARGET "aarch64-linux-gnu")
+# CMake 3.22 is not using `CMAKE_EXE_LINKER_FLAGS` when compiling a CUDA test
+# program, causing the linker to fail. This is a workaround
 set(CMAKE_CUDA_FLAGS "-fuse-ld=lld")
 
 # sm_53 is the compute capability of the Jetson Nano (t210)
@@ -54,18 +59,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
-# Set compiler/linker flags for cross-compiling
-set(CROSSCOMPILE_BUILD_FLAGS
-    "--target=aarch64-linux-gnu --sysroot=${CMAKE_SYSROOT} --gcc-toolchain=${GCC_TOOLCHAIN}")
-set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} ${CROSSCOMPILE_BUILD_FLAGS}"
-    CACHE STRING "C flags")
-set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} ${CROSSCOMPILE_BUILD_FLAGS}"
-    CACHE STRING "C++ flags")
-set(CMAKE_CUDA_FLAGS
-    "${CMAKE_CUDA_FLAGS} ${CROSSCOMPILE_BUILD_FLAGS}"
-    CACHE STRING "CUDA flags")
+# Set the default linker flags to use the LLD linker and find the CUDA libraries
 set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld -L${SYSROOT_CUDA}/lib64"
     CACHE STRING "Linker flags")
