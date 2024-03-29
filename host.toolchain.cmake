@@ -1,6 +1,7 @@
 # Specify the compilers
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CUDA_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++")
 
 if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-11.4_amd64")
   set(CUDAToolkit_ROOT "${CMAKE_CURRENT_LIST_DIR}/nvidia/cuda-11.4_amd64")
@@ -11,9 +12,6 @@ else()
     FATAL_ERROR
       "CUDAToolkit_ROOT does not exist: ${CUDAToolkit_ROOT}\nPlease run ./scripts/extract-cuda.sh")
 endif()
-
-# Specify Clang as the CUDA compiler
-set(CMAKE_CUDA_COMPILER "${CMAKE_CXX_COMPILER}")
 
 # Set linker flags on non-MacOS platforms
 if(NOT APPLE)

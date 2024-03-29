@@ -91,7 +91,7 @@ if(COMPILE_T194)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/backend/gpu)
   target_include_directories(backend_t194 SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_t194 PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
-                                            ${CUDA_NVTX_LIBRARY})
+                                            CUDA::nvToolsExt)
   target_compile_definitions(
     backend_t194 PUBLIC -DUSE_GPU -DUSE_T194 -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
@@ -111,7 +111,7 @@ if(COMPILE_T210)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/backend/gpu)
   target_include_directories(backend_t210 SYSTEM PRIVATE ${EXPECTED_INCLUDE_DIRS})
   target_link_libraries(backend_t210 PUBLIC cpptrace::cpptrace tl::expected CUDA::cudart
-                                            ${CUDA_NVTX_LIBRARY})
+                                            CUDA::nvToolsExt)
   target_compile_definitions(
     backend_t210 PUBLIC -DUSE_GPU -DUSE_T210 -DCUDA_MAJOR=${CUDAToolkit_VERSION_MAJOR}
                         -DCUDA_MINOR=${CUDAToolkit_VERSION_MINOR})
