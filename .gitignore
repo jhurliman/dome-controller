@@ -43,5 +43,8 @@ sysroot/
 # clangd cache
 .cache/
 
+# ESP-IDF / PlatformIO
+sdkconfig.*
+
 # OS-specific files
 *.DS_Store
