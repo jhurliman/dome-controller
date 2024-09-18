@@ -1,0 +1,9 @@
+// vscode settings.json
+{
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/.pio/build/esp32dev/compile_commands.json",
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format",
+    "editor.formatOnSave": true,
+  },
+  "clangd.arguments": ["--compile-commands-dir=${workspaceFolder}/.pio/build/esp32dev"],
+}
