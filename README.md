@@ -19,20 +19,18 @@ India-Nine
 Juliet-Ten
 Kilo-Eleven
 Lima-Twelve
-Mike-Thirteen
-November-Fourteen
-Oscar-Fifteen
-Papa-Sixteen
 ```
+
+The layout is six speakers $X cm above the floor in a hexagonal pattern pointing towards the center of the dome (level elevation), four speakers $Y cm above the floor in a square pattern pointing towards the center of the dome (same elevation as the first hexagon level), and two speakers $Z cm above the floor in a short line pointing down towards the center of the dome (first elevation).
 
 ## Software / Hardware
 
-MacOS: Ableton Live + Envelop4Live -> Max4Live -> OSC(?)
-Linux: OSC(?) -> C++ OSC recv and AmbiX decode -> PulseAudio 12ch -> MOTU 16-A
+MacOS Ableton Live + Envelop4Live -> Max4Live AmbiX decode -> MOTU 16-A -> 12-channel amplifier -> 12 6.25" speakers
+..................................-> Chromatik (MIDI) -> ESP32 (Art-Net DMX) -> 10-addressable WS2805 ICs -> 30 RGB+CCT LEDs
 
 ## Getting Started
 
-Read the [Getting Started](docs/GettingStarted.md) guide to learn how to build and run the software.
+This repository is in the process of being overhauled, as the C++ code is being replaced with ESP32 firmware and Ableton/Max4Live/Chromatik project files.
 
 ## License
 
