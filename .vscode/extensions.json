@@ -4,7 +4,9 @@
     "esbenp.prettier-vscode",
     "llvm-vs-code-extensions.vscode-clangd",
     "ms-vscode.cpptools",
-    "twxs.cmake"
+    "platformio.platformio-ide",
+    "twxs.cmake",
+    "xaver.clang-format"
   ],
   "unwantedRecommendations": []
 }

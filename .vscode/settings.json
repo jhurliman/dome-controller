@@ -9,14 +9,13 @@
   "files.trimTrailingWhitespace": true,
 
   "[cpp]": {
-    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    "editor.defaultFormatter": "xaver.clang-format"
   },
   "[cuda-cpp]": {
-    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    "editor.defaultFormatter": "xaver.clang-format"
   },
 
   "C_Cpp.autoAddFileAssociations": false,
-  "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.configureOnOpen": false,
 
   "search.exclude": {
