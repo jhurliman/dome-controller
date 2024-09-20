@@ -24,13 +24,13 @@ void AnimationManager::stop() {
   current_animation_ = [](time_ms) {};
 }
 
-void FillColor(Lights& leds, uint32_t num_leds, const CRGB& color) {
-  for (uint16_t i = 0; i < num_leds; i++) {
+void FillColor(Lights& leds, const CRGB& color) {
+  for (uint16_t i = 0; i < leds.size(); i++) {
     leds.setPixelColor(i, color);
   }
 }
 
-void SlowBluePulse(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint32_t num_leds) {
+void SlowBluePulse(time_ms elapsed_time, time_ms duration_ms, Lights& leds) {
   // Normalize the phase between 0 and 1
   const float phase = fmod(elapsed_time, duration_ms) / duration_ms;
   // Sine wave for smooth pulse; scale to 0-1
@@ -39,22 +39,23 @@ void SlowBluePulse(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint
   const uint8_t scaled_brightness = brightness * 255;
   CRGB color = Lights::RoyalBlue;
   color.nscale8_video(scaled_brightness);
-  FillColor(leds, num_leds, color);
+  FillColor(leds, color);
 }
 
-void GreenSpinner(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint32_t num_leds) {
+void GreenSpinner(time_ms elapsed_time, time_ms duration_ms, Lights& leds) {
   constexpr float SPIN_SPEED = 0.5; // Revolutions per second
   constexpr float TAIL_FRACTION = 0.75;
   const CRGB COLOR = Lights::Green;
 
+  const uint16_t num_leds = leds.size();
   const uint32_t tail_length = uint32_t(float(num_leds) * TAIL_FRACTION);
 
   // Calculate the current position of the spinner based on the elapsed time
   const float phase = fmod(elapsed_time, duration_ms) / duration_ms;
-  const uint32_t position = static_cast<uint32_t>(phase * num_leds * SPIN_SPEED) % num_leds;
+  const uint32_t position = uint32_t(phase * num_leds * SPIN_SPEED) % num_leds;
 
   // Clear all LEDs first
-  FillColor(leds, num_leds, Lights::Black);
+  FillColor(leds, Lights::Black);
 
   // Light up the current position LED and create a fading tail
   for (uint32_t i = 0; i <= tail_length; i++) {
@@ -68,7 +69,7 @@ void GreenSpinner(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint3
   }
 }
 
-void BlinkThenThrob(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint32_t num_leds) {
+void BlinkThenThrob(time_ms elapsed_time, time_ms duration_ms, Lights& leds) {
   // Blink the LEDs on and off for two seconds then a dim slow pulse
   constexpr time_ms BLINK_DURATION_MS = 1800.0f;
   constexpr uint8_t THROB_MIN_BRIGHTNESS = 10;
@@ -83,7 +84,7 @@ void BlinkThenThrob(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uin
     const uint32_t intervals = uint32_t(elapsed_time / 600.0f); // Toggle on/off every 600 ms
     const uint8_t blink_state = intervals % 2;
     const CRGB color = (blink_state == 0) ? BLINK_COLOR : Lights::Black;
-    FillColor(leds, num_leds, color);
+    FillColor(leds, color);
     return;
   }
 
@@ -94,5 +95,5 @@ void BlinkThenThrob(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uin
   const uint8_t scaled_brightness = THROB_MIN_BRIGHTNESS + brightness * THROB_BRIGHTNESS_SCALE;
   CRGB color = THROB_COLOR;
   color.nscale8_video(scaled_brightness);
-  FillColor(leds, num_leds, color);
+  FillColor(leds, color);
 }

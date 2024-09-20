@@ -22,10 +22,10 @@ public:
   void stop();
 };
 
-void FillColor(Lights& leds, uint32_t num_leds, const CRGB& color);
+void FillColor(Lights& leds, const CRGB& color);
 
-void SlowBluePulse(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint32_t num_leds);
+void SlowBluePulse(time_ms elapsed_time, time_ms duration_ms, Lights& leds);
 
-void GreenSpinner(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint32_t num_leds);
+void GreenSpinner(time_ms elapsed_time, time_ms duration_ms, Lights& leds);
 
-void BlinkThenThrob(time_ms elapsed_time, time_ms duration_ms, Lights& leds, uint32_t num_leds);
+void BlinkThenThrob(time_ms elapsed_time, time_ms duration_ms, Lights& leds);

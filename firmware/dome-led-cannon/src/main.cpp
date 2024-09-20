@@ -45,6 +45,7 @@ void setup() {
   Serial.begin(115200);
 
   println("Initializing LEDs...");
+  g_leds.setup();
   InitialPattern();
   g_leds.show();
 
@@ -109,30 +110,28 @@ void loop() {
   }
 
   HandleState(g_state, g_prev_state);
+  g_prev_state = g_state;
 
   g_animations.update();
   g_leds.show();
 }
 
 void HandleState(SystemState new_state, SystemState prev_state) {
-  if (g_state != g_prev_state) {
-    printf("State transition: %d -> %d\n", int(g_prev_state), int(g_state));
-    switch (g_state) {
+  if (new_state != prev_state) {
+    printf("State transition: %d -> %d\n", int(prev_state), int(new_state));
+    switch (new_state) {
     case SystemState::Setup:
       // Should never transition back to Setup
       assert(false && "Invalid state transition to Setup");
       break;
     case SystemState::Connecting:
-      g_animations.setAnimation(
-        [](time_ms elapsed) { SlowBluePulse(elapsed, 2000, g_leds, kNumLeds); });
+      g_animations.setAnimation([](time_ms elapsed) { SlowBluePulse(elapsed, 2000, g_leds); });
       break;
     case SystemState::APMode:
-      g_animations.setAnimation(
-        [](time_ms elapsed) { GreenSpinner(elapsed, 2000, g_leds, kNumLeds); });
+      g_animations.setAnimation([](time_ms elapsed) { GreenSpinner(elapsed, 2000, g_leds); });
       break;
     case SystemState::Connected:
-      g_animations.setAnimation(
-        [](time_ms elapsed) { BlinkThenThrob(elapsed, 5000, g_leds, kNumLeds); });
+      g_animations.setAnimation([](time_ms elapsed) { BlinkThenThrob(elapsed, 5000, g_leds); });
       break;
     case SystemState::RemoteControl:
       g_animations.stop();
@@ -141,8 +140,6 @@ void HandleState(SystemState new_state, SystemState prev_state) {
       CriticalAbort();
       break;
     }
-
-    g_prev_state = g_state;
   }
 }
 
@@ -154,7 +151,7 @@ void HandleDMX(
   g_state = SystemState::RemoteControl;
 
   // Copy the DMX data to the LED strip
-  const uint16_t light_count = std::min(uint16_t(size / kNumChannels), kNumLeds);
+  const uint16_t light_count = std::min(uint16_t(size / kNumChannels), g_leds.size());
   for (uint16_t i = 0; i < light_count; i++) {
     const uint8_t r = data[i * kNumChannels + 0];
     const uint8_t g = data[i * kNumChannels + 1];
@@ -179,7 +176,7 @@ uint16_t GetLightId() {
 }
 
 void InitialPattern() {
-  for (uint16_t i = 0; i < kNumLeds; i++) {
+  for (uint16_t i = 0; i < g_leds.size(); i++) {
     g_leds.setPixelColor(i, (i % 2 == 0) ? Lights::RoyalBlue : Lights::Green);
   }
 }

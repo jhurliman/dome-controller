@@ -35,7 +35,9 @@ const CRGB Lights::RoyalBlue{65, 105, 225};
 
 Lights::Lights(uint16_t num_leds, uint8_t data_pin)
   : leds_(num_leds, data_pin),
-    num_leds_(num_leds) {
+    num_leds_(num_leds) {}
+
+void Lights::setup() {
   leds_.Begin();
   leds_.ClearTo(RgbwwColor{});
 }

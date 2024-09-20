@@ -26,6 +26,9 @@ public:
   // Constructor: number of LEDs, GPIO pin number
   Lights(uint16_t num_leds, uint8_t data_pin);
 
+  // Initialize the LED strip
+  void setup();
+
   // Set the color of a single LED
   void setPixelColor(uint16_t index, const RgbwwColor& color);
 
@@ -39,6 +42,8 @@ public:
 
   // Update the LED strip
   void show();
+
+  uint16_t size() const { return num_leds_; }
 
   // Convert a color temperature from [0-10000K] to an RGBWW color
   static RgbwwColor ColorFromTemperature(uint16_t color_temp);
