@@ -8,63 +8,26 @@ on:
     branches: ["*"]
 
 jobs:
-  build:
+  dome-led-cannon:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        clang-version:
-          - 15
     steps:
-      # Setup
-      - name: Install clang-${{ matrix.clang-version }}
-        uses: egor-tensin/setup-clang@v1
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
         with:
-          version: ${{ matrix.clang-version }}
-      - name: Set clang-${{ matrix.clang-version }} as default
-        run: |
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ matrix.clang-version }} 999
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.clang-version }} 999
-          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${{ matrix.clang-version }} 999
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${{ matrix.clang-version }} 999
-          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${{ matrix.clang-version }} 999
-          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${{ matrix.clang-version }} 999
-          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${{ matrix.clang-version }} 999
-      - name: Install CMake/Ninja/PulseAudio
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            cmake \
-            ninja-build \
-            libpulse-dev
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
 
-      # Checkout
-      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
         with:
-          lfs: true
+          python-version: "3.11"
 
-      # Code formatting
-      - name: clang-format
-        run: clang-format --dry-run --Werror --style=file $(find include/ -name '*.hpp') $(find src/ -name '*.cpp')
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+        working-directory: ./firmware/dome-led-cannon
 
-      # Fetch cached output of ./scripts/extract-cuda.sh --cuda 10.2
-      - name: Download and extract CUDA Toolkit 10.2 (x86_64)
-        run: |
-          mkdir -p ./nvidia
-          wget --no-verbose --show-progress --progress=dot:mega https://jetson-crosscompile.s3.amazonaws.com/cuda-10.2_amd64.tar.gz -O cuda.tar.gz
-          tar -xzpf cuda.tar.gz -C ./nvidia
-          ls -lh ./nvidia/cuda-10.2_amd64
-
-      # Build
-      - name: Build for host (x86_64)
-        run: |
-          cmake --version
-          make
-
-      # Lint
-      - name: clang-tidy
-        run: clang-tidy -p build/host --config-file=.clang-tidy --use-color $(find src/ -name '*.cpp')
-
-      # Test
-      - name: Run tests
-        run: ctest --preset host-cpu
+      - name: Build PlatformIO Project
+        run: pio run
+        working-directory: ./firmware/dome-led-cannon
